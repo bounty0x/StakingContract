@@ -9,7 +9,7 @@ contract Bounty0xStaking is Ownable {
 
     using SafeMath for uint256;
 
-    address Bounty0xToken;
+    address public Bounty0xToken;
 
     mapping (uint => mapping (address => uint)) public staked; // mapping of bounty ids to mapping of staked amounts of bounty token by hunters
 
