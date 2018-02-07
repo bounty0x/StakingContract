@@ -11,33 +11,31 @@ contract Bounty0xStaking is Ownable {
 
     address Bounty0xToken;
 
-    mapping (address => uint) public staked; 
+    mapping (uint => mapping (address => uint)) public staked; // mapping of bounty ids to mapping of staked amounts of bounty token by hunters
 
-    event StakeRecieved(address user, uint amount, uint balance);
-    event StakeReleased(address _from, address _to, uint amount, uint balance);
-    
+    event StakeRecieved(uint bountyId, address hunter, uint amount);
+    event StakeReleased(uint bountyId, address from, address to, uint amount);
+
 
     function Bounty0xStaking(address _bounty0xToken) public {
         Bounty0xToken = _bounty0xToken;
     }
-    
 
-    function stake(uint _amount) public {
+    function stake(uint _bountyId, uint _amount) public {
         //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
         require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
-        staked[msg.sender] = SafeMath.add(staked[msg.sender], _amount);
+        staked[_bountyId][msg.sender] = SafeMath.add(staked[_bountyId][msg.sender], _amount);
 
-        StakeRecieved(msg.sender, _amount, staked[msg.sender]);
+        StakeRecieved(_bountyId, msg.sender, _amount);
     }
 
-    function releaseStake(address _from, address _to, uint _amount) public onlyOwner {
-        require(staked[_from] >= _amount);
-        
-        staked[_from] = SafeMath.sub(staked[_from], _amount);
+    function releaseStake(uint _bountyId, address _from, address _to, uint _amount) public onlyOwner {
+        require(staked[_bountyId][_from] >= _amount);
+
+        staked[_bountyId][_from] = SafeMath.sub(staked[_bountyId][_from], _amount);
         require(ERC20(Bounty0xToken).transfer(_to, _amount));
-        
-        StakeReleased(_to, _from, _amount, staked[_from]);
+
+        StakeReleased(_bountyId, _from, _to, _amount);
     }
 
 }
-
