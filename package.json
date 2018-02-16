@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bounty0x/Bounty0xEscrowContract.git"
+    "url": "git+https://github.com/bounty0x/Bounty0xStakingContract.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/bounty0x/Bounty0xEscrowContract/issues"
+    "url": "https://github.com/bounty0x/Bounty0xStakingContract/issues"
   },
-  "homepage": "https://github.com/bounty0x/Bounty0xEscrowContract#readme",
+  "homepage": "https://github.com/bounty0x/Bounty0xStakingContract#readme",
   "dependencies": {
     "ethereumjs-util": "^5.1.2",
     "ethereumjs-wallet": "^0.6.0",
