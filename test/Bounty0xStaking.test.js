@@ -20,31 +20,77 @@ contract('Bounty0xStaking', ([ owner, acct1, acct2, acct3, acct4, acct5 ]) => {
         assert.strictEqual(typeof stakingContract.address, 'string');
     });
 
-    it('should stake', async () => {
+    it('should depositAsHunter', async () => {
         await tokenContract.approve(stakingContract.address, 1000);
-        await stakingContract.stake(0, 1000);
-        let balanceStaked = await stakingContract.staked(0, owner);
-        assert.strictEqual(balanceStaked.toNumber(), 1000);
+        await stakingContract.depositAsHunter(1000);
+        let balanceDeposited = await stakingContract.huntersDeposits(owner);
+        assert.strictEqual(balanceDeposited.toNumber(), 1000);
 
         let stakingContractBalance = await tokenContract.balanceOf(stakingContract.address);
         assert.strictEqual(stakingContractBalance.toNumber(), 1000);
     });
 
-    it('releaseStake can only be called by owner', async () => {
+    it('should depositAsSheriff', async () => {
+        await tokenContract.approve(stakingContract.address, 1000);
+        await stakingContract.depositAsSheriff(1000);
+        let balanceDeposited = await stakingContract.sheriffsDeposits(owner);
+        assert.strictEqual(balanceDeposited.toNumber(), 1000);
+
+        let stakingContractBalance = await tokenContract.balanceOf(stakingContract.address);
+        assert.strictEqual(stakingContractBalance.toNumber(), 2000);
+    });
+
+    it('should stakeAsHunter', async () => {
+        await stakingContract.stakeAsHunter(0, 100);
+        let balanceStaked = await stakingContract.stakedByHunters(0, owner);
+        assert.strictEqual(balanceStaked.toNumber(), 100);
+
+        let hunterDeposit = await stakingContract.huntersDeposits(owner);
+        assert.strictEqual(hunterDeposit.toNumber(), 900);
+    });
+
+    it('should stakeAsSheriff', async () => {
+        await stakingContract.stakeAsSheriff(0, 100);
+        let balanceStaked = await stakingContract.stakedBySheriffs(0, owner);
+        assert.strictEqual(balanceStaked.toNumber(), 100);
+
+        let sheriffDeposit = await stakingContract.sheriffsDeposits(owner);
+        assert.strictEqual(sheriffDeposit.toNumber(), 900);
+    });
+
+    it('releaseHunterStake can only be called by owner', async () => {
         const bountyId = 0;
         const address = '0x1Dc4cf41Ce1f397033DeA502528b753b4D028777';
-        const amount = 100;
-        let initialStaked = await stakingContract.staked(0, owner);
+        const amount = 10;
+        let initialStaked = await stakingContract.stakedByHunters(0, owner);
 
-        await expectThrow(stakingContract.releaseStake(bountyId, owner, address, amount, { from: acct1 }));
-        await expectThrow(stakingContract.releaseStake(bountyId, owner, address, amount, { from: acct2 }));
-        const { logs } = await stakingContract.releaseStake(bountyId, owner, address, amount, { from: owner });
+        await expectThrow(stakingContract.releaseHunterStake(bountyId, owner, address, amount, { from: acct1 }));
+        await expectThrow(stakingContract.releaseHunterStake(bountyId, owner, address, amount, { from: acct2 }));
+        const { logs } = await stakingContract.releaseHunterStake(bountyId, owner, address, amount, { from: owner });
         assert.strictEqual(logs.length, 1);
 
         let balanceOfAddress = await tokenContract.balanceOf(address);
         assert.equal(amount, balanceOfAddress.toNumber());
 
-        let tokenBalanceStakedHunter = await stakingContract.staked(0, owner);
+        let tokenBalanceStakedHunter = await stakingContract.stakedByHunters(0, owner);
+        assert.equal(initialStaked - amount, tokenBalanceStakedHunter.toNumber());
+    });
+
+    it('releaseSheriffStake can only be called by owner', async () => {
+        const bountyId = 0;
+        const address = '0x1Dc4cf41Ce1f397033DeA502528b753b4D028771';
+        const amount = 10;
+        let initialStaked = await stakingContract.stakedBySheriffs(0, owner);
+
+        await expectThrow(stakingContract.releaseSheriffStake(bountyId, owner, address, amount, { from: acct1 }));
+        await expectThrow(stakingContract.releaseSheriffStake(bountyId, owner, address, amount, { from: acct2 }));
+        const { logs } = await stakingContract.releaseSheriffStake(bountyId, owner, address, amount, { from: owner });
+        assert.strictEqual(logs.length, 1);
+
+        let balanceOfAddress = await tokenContract.balanceOf(address);
+        assert.equal(amount, balanceOfAddress.toNumber());
+
+        let tokenBalanceStakedHunter = await stakingContract.stakedBySheriffs(0, owner);
         assert.equal(initialStaked - amount, tokenBalanceStakedHunter.toNumber());
     });
 
