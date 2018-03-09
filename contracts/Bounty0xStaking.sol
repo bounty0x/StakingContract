@@ -38,7 +38,7 @@ contract Bounty0xStaking is Ownable {
         require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
         huntersDeposits[msg.sender] = SafeMath.add(huntersDeposits[msg.sender], _amount);
 
-        DepositByHunter(msg.sender, _amount, huntersDeposits[msg.sender]);
+        emit DepositByHunter(msg.sender, _amount, huntersDeposits[msg.sender]);
     }
 
     function depositAsSheriff(uint _amount) public {
@@ -46,7 +46,7 @@ contract Bounty0xStaking is Ownable {
         require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
         sheriffsDeposits[msg.sender] = SafeMath.add(sheriffsDeposits[msg.sender], _amount);
 
-        DepositBySheriff(msg.sender, _amount, sheriffsDeposits[msg.sender]);
+        emit DepositBySheriff(msg.sender, _amount, sheriffsDeposits[msg.sender]);
     }
 
 
@@ -55,7 +55,7 @@ contract Bounty0xStaking is Ownable {
         huntersDeposits[msg.sender] = SafeMath.sub(huntersDeposits[msg.sender], _amount);
         stakedByHunters[_bountyId][msg.sender] = SafeMath.add(stakedByHunters[_bountyId][msg.sender], _amount);
 
-        StakeByHunter(_bountyId, msg.sender, _amount);
+        emit StakeByHunter(_bountyId, msg.sender, _amount);
     }
 
     function stakeAsSheriff(uint _bountyId, uint _amount) public {
@@ -63,7 +63,7 @@ contract Bounty0xStaking is Ownable {
         sheriffsDeposits[msg.sender] = SafeMath.sub(sheriffsDeposits[msg.sender], _amount);
         stakedBySheriffs[_bountyId][msg.sender] = SafeMath.add(stakedBySheriffs[_bountyId][msg.sender], _amount);
 
-        StakeBySheriff(_bountyId, msg.sender, _amount);
+        emit StakeBySheriff(_bountyId, msg.sender, _amount);
     }
 
 
@@ -73,7 +73,7 @@ contract Bounty0xStaking is Ownable {
         stakedByHunters[_bountyId][_from] = SafeMath.sub(stakedByHunters[_bountyId][_from], _amount);
         require(ERC20(Bounty0xToken).transfer(_to, _amount));
 
-        StakeOfHunterRelease(_bountyId, _from, _to, _amount);
+        emit StakeOfHunterRelease(_bountyId, _from, _to, _amount);
     }
 
     function releaseSheriffStake(uint _bountyId, address _from, address _to, uint _amount) public onlyOwner {
@@ -82,7 +82,7 @@ contract Bounty0xStaking is Ownable {
         stakedBySheriffs[_bountyId][_from] = SafeMath.sub(stakedBySheriffs[_bountyId][_from], _amount);
         require(ERC20(Bounty0xToken).transfer(_to, _amount));
 
-        StakeOfSheriffRelease(_bountyId, _from, _to, _amount);
+        emit StakeOfSheriffRelease(_bountyId, _from, _to, _amount);
     }
 
 }
