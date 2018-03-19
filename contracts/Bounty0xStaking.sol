@@ -18,6 +18,7 @@ contract Bounty0xStaking is Ownable {
 
     
     event Deposit(address depositor, uint amount, uint balance); 
+    event Withdraw(address depositor, uint amount, uint balance);
     
     event StakeByHunter(uint submissionId, address hunter, uint amount);
     event StakeBySheriff(uint submissionId, address sheriff, uint amount);
@@ -75,8 +76,13 @@ contract Bounty0xStaking is Ownable {
         emit StakeOfSheriffRelease(_submissionId, _from, _to, _amount);
     }
 
-    // withdraw function for hunter
-    // withdraw function for sheriff
+    function withdrawDeposit (uint _amount) public {
+        require(balances[msg.sender] >= _amount);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
+        require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
+        Withdraw( msg.sender, uint _amount, balances[msg.sender]);
+        
+    }
     
     // release to burn token hunter
     // release to burn token sheriff
