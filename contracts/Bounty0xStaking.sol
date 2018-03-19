@@ -119,95 +119,140 @@ contract Bounty0xStaking is Ownable {
  
     address public Bounty0xToken;
    
-    mapping (address => uint) public Deposits;
+    mapping (address => uint) public balances;
 
     mapping (uint => mapping (address => uint)) public stakedByHunters; // mapping of submission ids to mapping of staked amounts of bounty token by hunters
     mapping (uint => mapping (address => uint)) public stakedBySheriffs; // mapping of submission ids to mapping of staked amounts of bounty token by sheriffs
- 
-   
-    event DepositByHunter(address depositor, uint amount, uint balance);
-    event DepositBySheriff(address depositor, uint amount, uint balance);
-   
+
+    
+    event Deposit(address depositor, uint amount, uint balance); 
+    event Withdraw(address depositor, uint amount, uint balance);
+    
     event StakeByHunter(uint submissionId, address hunter, uint amount);
     event StakeBySheriff(uint submissionId, address sheriff, uint amount);
-   
+    
     event StakeOfHunterRelease(uint bountyId, address from, address to, uint amount);
     event StakeOfSheriffRelease(uint bountyId, address from, address to, uint amount);
-   
- 
+    
+
     function Bounty0xStaking(address _bounty0xToken) public {
         Bounty0xToken = _bounty0xToken;
     }
-   
-   
-    function depositAsHunter(uint _amount) public {
-        //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-        require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
-        Deposits[msg.sender] = SafeMath.add(Deposits[msg.sender], _amount);
- 
-        DepositByHunter(msg.sender, _amount, Deposits[msg.sender]);
-    }
-   
-    function depositAsSheriff(uint _amount) public {
-        //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-        require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
-        Deposits[msg.sender] = SafeMath.add(Deposits[msg.sender], _amount);
- 
-        DepositBySheriff(msg.sender, _amount, Deposits[msg.sender]);
-    }
-   
-   
-    function stakeAsHunter(uint _submissionId, uint _amount) public {
-        require(Deposits[msg.sender] >= _amount);
-        Deposits[msg.sender] = SafeMath.sub(Deposits[msg.sender], _amount);
-        stakedByHunters[_submissionId][msg.sender] = SafeMath.add(stakedByHunters[_submissionId][msg.sender], _amount);
-       
-        StakeByHunter(_submissionId, msg.sender, _amount);
-    }
-   
-    function stakeAsSheriff(uint _submissionId, uint _amount) public {
-        require(Deposits[msg.sender] >= _amount);
-        Deposits[msg.sender] = SafeMath.sub(Deposits[msg.sender], _amount);
-        stakedBySheriffs[_submissionId][msg.sender] = SafeMath.add(stakedBySheriffs[_submissionId][msg.sender], _amount);
-       
-        StakeBySheriff(_submissionId, msg.sender, _amount);
-    }
- 
- 
-    function releaseHunterStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
-        require(stakedByHunters[_submissionId][_from] >= _amount);
- 
-        stakedByHunters[_submissionId][_from] = SafeMath.sub(stakedByHunters[_submissionId][_from], _amount);
-        Deposits[_to] = SafeMath.add(Deposits[_to], _amount);
- 
-        StakeOfHunterRelease(_submissionId, _from, _to, _amount);
-    }
-   
-    function releaseSheriffStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
-        require(stakedBySheriffs[_submissionId][_from] >= _amount);
- 
-        stakedBySheriffs[_submissionId][_from] = SafeMath.sub(stakedBySheriffs[_submissionId][_from], _amount);
-        Deposits[_to] = SafeMath.add(Deposits[_to], _amount);
- 
-        StakeOfSheriffRelease(_submissionId, _from, _to, _amount);
-    }
- 
-    // withdraw function for both hunter and sheriff
     
-    function withdrawDeposit (uint _amount) public {
-        require(Deposits[msg.sender] >= _amount);
-        Deposits[msg.sender] = SafeMath.sub(Deposits[msg.sender], _amount);
-        require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
+    
+    function deposit(uint _amount) public {
+        //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
+        require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
+        balances[msg.sender] = SafeMath.add(balances[msg.sender], _amount);
+
+        emit Deposit(msg.sender, _amount, balances[msg.sender]);
+    }
+    
+    
+    function stakeAsHunter(uint _submissionId, uint _amount) public {
+        require(balances[msg.sender] >= _amount);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
+        stakedByHunters[_submissionId][msg.sender] = SafeMath.add(stakedByHunters[_submissionId][msg.sender], _amount);
         
+        emit StakeByHunter(_submissionId, msg.sender, _amount);
+    }
+    
+    function stakeAsSheriff(uint _submissionId, uint _amount) public {
+        require(balances[msg.sender] >= _amount);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
+        stakedBySheriffs[_submissionId][msg.sender] = SafeMath.add(stakedBySheriffs[_submissionId][msg.sender], _amount);
+        
+        emit StakeBySheriff(_submissionId, msg.sender, _amount);
     }
 
+
+    function releaseHunterStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
+        require(stakedByHunters[_submissionId][_from] >= _amount);
+
+        stakedByHunters[_submissionId][_from] = SafeMath.sub(stakedByHunters[_submissionId][_from], _amount);
+        balances[_to] = SafeMath.add(balances[_to], _amount);
+
+        emit StakeOfHunterRelease(_submissionId, _from, _to, _amount);
+    }
+    
+    function releaseSheriffStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
+        require(stakedBySheriffs[_submissionId][_from] >= _amount);
+
+        stakedBySheriffs[_submissionId][_from] = SafeMath.sub(stakedBySheriffs[_submissionId][_from], _amount);
+        balances[_to] = SafeMath.add(balances[_to], _amount);
+
+        emit StakeOfSheriffRelease(_submissionId, _from, _to, _amount);
+    }
+
+    function withdrawDeposit (uint _amount) public {
+        require(balances[msg.sender] >= _amount);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
+        require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
+        Withdraw(msg.sender, _amount, balances[msg.sender]);
+        
+    }
+    
     // release to burn token hunter
     // release to burn token sheriff
- 
-    // batch function stakeAsHunter for hunter
-    // batch function stakeAsSheriff for sheriff
- 
-    // batch function for releaseHunterStake for owner
-    // batch function for releaseSheriffStake for owner
+
+    function stakeToManyAsHunter(uint[] _submissionIds, uint[] _amounts) public {
+        uint totalAmount = 0;
+        for (uint j = 0; j < _amounts.length; j++) {
+            totalAmount = SafeMath.add(totalAmount, _amounts[j]);
+        }
+        require(balances[msg.sender] >= totalAmount);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], totalAmount);
+       
+        for (uint i = 0; i < _submissionIds.length; i++) {
+            stakedByHunters[_submissionIds[i]][msg.sender] = SafeMath.add(stakedByHunters[_submissionIds[i]][msg.sender], _amounts[i]);
+            
+            emit StakeByHunter(_submissionIds[i], msg.sender, _amounts[i]);
+        }
+    }
+    
+    function stakeToManyAsSheriff(uint[] _submissionIds, uint[] _amounts) public {
+        uint totalAmount = 0;
+        for (uint j = 0; j < _amounts.length; j++) {
+            totalAmount = SafeMath.add(totalAmount, _amounts[j]);
+        }
+        require(balances[msg.sender] >= totalAmount);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], totalAmount);
+       
+        for (uint i = 0; i < _submissionIds.length; i++) {
+            stakedBySheriffs[_submissionIds[i]][msg.sender] = SafeMath.add(stakedBySheriffs[_submissionIds[i]][msg.sender], _amounts[i]);
+            
+            emit StakeBySheriff(_submissionIds[i], msg.sender, _amounts[i]);
+        }
+    }
+    
+
+    function releaseManyHunterStakes(uint[] _submissionIds, address[] _from, address[] _to, uint[] _amounts) public onlyOwner {
+        require(_submissionIds.length == _from.length &&
+                _submissionIds.length == _to.length && 
+                _submissionIds.length == _amounts.length);
+        
+        for (uint i = 0; i < _submissionIds.length; i++) {
+            require(stakedByHunters[_submissionIds[i]][_from[i]] >= _amounts[i]);
+            stakedByHunters[_submissionIds[i]][_from[i]] = SafeMath.sub(stakedByHunters[_submissionIds[i]][_from[i]], _amounts[i]);
+            balances[_to[i]] = SafeMath.add(balances[_to[i]], _amounts[i]);
+            
+            emit StakeOfHunterRelease(_submissionIds[i], _from[i], _to[i], _amounts[i]);
+        }
+    }
+    
+    function releaseManySheriffStakes(uint[] _submissionIds, address[] _from, address[] _to, uint[] _amounts) public onlyOwner {
+        require(_submissionIds.length == _from.length &&
+                _submissionIds.length == _to.length && 
+                _submissionIds.length == _amounts.length);
+        
+        for (uint i = 0; i < _submissionIds.length; i++) {
+            require(stakedBySheriffs[_submissionIds[i]][_from[i]] >= _amounts[i]);
+            stakedBySheriffs[_submissionIds[i]][_from[i]] = SafeMath.sub(stakedBySheriffs[_submissionIds[i]][_from[i]], _amounts[i]);
+            balances[_to[i]] = SafeMath.add(balances[_to[i]], _amounts[i]);
+            
+            emit StakeOfSheriffRelease(_submissionIds[i], _from[i], _to[i], _amounts[i]);
+        }
+    }
+
    
 }
