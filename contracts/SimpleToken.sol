@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-import 'zeppelin-solidity/contracts/token/StandardToken.sol';
+import 'openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 
 /**
  * @title SimpleToken
@@ -12,7 +12,7 @@ contract SimpleToken is StandardToken {
 
   string public constant name = "SimpleToken";
   string public constant symbol = "SIM";
-  uint8 public constant decimals = 0;
+  uint8 public constant decimals = 18;
 
   uint256 public constant INITIAL_SUPPLY = 1000000 * (10 ** uint256(decimals));
 
@@ -20,7 +20,7 @@ contract SimpleToken is StandardToken {
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
   function SimpleToken() public {
-    totalSupply = INITIAL_SUPPLY;
+    totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
 

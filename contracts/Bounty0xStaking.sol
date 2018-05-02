@@ -1,11 +1,12 @@
 pragma solidity ^0.4.21;
 
-import 'zeppelin-solidity/contracts/math/SafeMath.sol';
-import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
-import 'zeppelin-solidity/contracts/token/ERC20.sol';
+import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
+import 'openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
 
 
-contract Bounty0xStaking is Ownable {
+contract Bounty0xStaking is Ownable, Pausable {
 
     using SafeMath for uint256;
 
@@ -13,7 +14,7 @@ contract Bounty0xStaking is Ownable {
 
     mapping (address => uint) public balances;
 
-    mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token 
+    mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token
 
 
     event Deposit(address depositor, uint amount, uint balance);
@@ -24,12 +25,12 @@ contract Bounty0xStaking is Ownable {
     event StakeReleased(uint submissionId, address from, address to, uint amount);
 
 
-    function Bounty0xStaking(address _bounty0xToken) public {
+    constructor(address _bounty0xToken) public {
         Bounty0xToken = _bounty0xToken;
     }
 
 
-    function deposit(uint _amount) public {
+    function deposit(uint _amount) public whenNotPaused {
         //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
         require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
         balances[msg.sender] = SafeMath.add(balances[msg.sender], _amount);
@@ -37,16 +38,16 @@ contract Bounty0xStaking is Ownable {
         emit Deposit(msg.sender, _amount, balances[msg.sender]);
     }
 
-    function withdraw(uint _amount) public {
+    function withdraw(uint _amount) public whenNotPaused {
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
-        
+
         emit Withdraw(msg.sender, _amount, balances[msg.sender]);
     }
 
 
-    function stake(uint _submissionId, uint _amount) public {
+    function stake(uint _submissionId, uint _amount) public whenNotPaused {
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         stakes[_submissionId][msg.sender] = SafeMath.add(stakes[_submissionId][msg.sender], _amount);
@@ -54,7 +55,7 @@ contract Bounty0xStaking is Ownable {
         emit Stake(_submissionId, msg.sender, _amount);
     }
 
-    function stakeToMany(uint[] _submissionIds, uint[] _amounts) public {
+    function stakeToMany(uint[] _submissionIds, uint[] _amounts) public whenNotPaused {
         uint totalAmount = 0;
         for (uint j = 0; j < _amounts.length; j++) {
             totalAmount = SafeMath.add(totalAmount, _amounts[j]);
@@ -68,7 +69,7 @@ contract Bounty0xStaking is Ownable {
             emit Stake(_submissionIds[i], msg.sender, _amounts[i]);
         }
     }
-    
+
 
     function releaseStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
         require(stakes[_submissionId][_from] >= _amount);
