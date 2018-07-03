@@ -21,12 +21,13 @@
   },
   "homepage": "https://github.com/bounty0x/Bounty0xStakingContract#readme",
   "dependencies": {
-    "ethereumjs-util": "^5.1.2",
+    "ethereumjs-util": "^5.2.0",
     "ethereumjs-wallet": "^0.6.0",
+    "i": "^0.3.6",
     "npm": "^6.1.0",
     "openzeppelin-solidity": "^1.9.0",
     "web3": "^0.18.4",
-    "web3-provider-engine": "^13.3.3"
+    "web3-provider-engine": "^13.8.0"
   },
   "devDependencies": {
     "babel-polyfill": "^6.26.0",
