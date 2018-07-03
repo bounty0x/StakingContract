@@ -23,6 +23,7 @@
   "dependencies": {
     "ethereumjs-util": "^5.1.2",
     "ethereumjs-wallet": "^0.6.0",
+    "npm": "^6.1.0",
     "openzeppelin-solidity": "^1.9.0",
     "web3": "^0.18.4",
     "web3-provider-engine": "^13.3.3"
