@@ -18,41 +18,71 @@ contract Bounty0xStaking is Ownable, Pausable {
     using SafeMath for uint256;
 
     address public Bounty0xToken;
+    uint public lockTime;
+    uint public lockAmount;
+
 
     mapping (address => uint) public balances;
     mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token
-
-
+    mapping (address => uint) public huntersLockDateTime;
+    mapping (address => uint) public huntersLockAmount;
+    
+    
     event Deposit(address indexed depositor, uint amount, uint balance);
     event Withdraw(address indexed depositor, uint amount, uint balance);
-
-    event Stake(uint indexed submissionId, address hunter, uint amount, uint balance);
-    event StakeReleased(uint indexed submissionId, address from, address to, uint amount);
+    event Stake(uint indexed submissionId, address indexed hunter, uint amount, uint balance);
+    event StakeReleased(uint indexed submissionId, address indexed from, address indexed to, uint amount);
+    event Lock(address indexed hunter, uint amount, uint endDateTime);
+    event Unlock(address indexed hunter, uint amount);
 
 
     constructor(address _bounty0xToken) public {
         Bounty0xToken = _bounty0xToken;
+        lockTime = 2 weeks;
+        lockAmount = SafeMath.mul(1000, (10 ** 18));
     }
+    
 
-
-    function deposit(uint _amount) public whenNotPaused {
+    function deposit(uint _amount) external whenNotPaused {
         //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
         require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
         balances[msg.sender] = SafeMath.add(balances[msg.sender], _amount);
 
         emit Deposit(msg.sender, _amount, balances[msg.sender]);
     }
-
-    function withdraw(uint _amount) public whenNotPaused {
+    
+    function withdraw(uint _amount) external whenNotPaused {
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
 
         emit Withdraw(msg.sender, _amount, balances[msg.sender]);
     }
+    
+    function lock() external whenNotPaused {
+        require(!isValidHunter(msg.sender));
+        require(balances[msg.sender] >= lockAmount);
+        
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], lockAmount);
+        huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], lockAmount);
+        huntersLockDateTime[msg.sender] = SafeMath.add(now, lockTime);
+        
+        emit Lock(msg.sender, lockAmount, huntersLockDateTime[msg.sender]);
+    }
+    
+    function unlock() external whenNotPaused {
+        require(!isValidHunter(msg.sender));
+        uint amountLocked = huntersLockAmount[msg.sender];
+        require(amountLocked != 0);
+        
+        huntersLockAmount[msg.sender] = SafeMath.sub(huntersLockAmount[msg.sender], amountLocked);
+        balances[msg.sender] = SafeMath.add(balances[msg.sender], amountLocked);
+        
+        emit Unlock(msg.sender, lockAmount);
+    }
 
 
-    function stake(uint _submissionId, uint _amount) public whenNotPaused {
+    function stake(uint _submissionId, uint _amount) external whenNotPaused {
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         stakes[_submissionId][msg.sender] = SafeMath.add(stakes[_submissionId][msg.sender], _amount);
@@ -60,7 +90,7 @@ contract Bounty0xStaking is Ownable, Pausable {
         emit Stake(_submissionId, msg.sender, _amount, balances[msg.sender]);
     }
 
-    function stakeToMany(uint[] _submissionIds, uint[] _amounts) public whenNotPaused {
+    function stakeToMany(uint[] _submissionIds, uint[] _amounts) external whenNotPaused {
         uint totalAmount = 0;
         for (uint j = 0; j < _amounts.length; j++) {
             totalAmount = SafeMath.add(totalAmount, _amounts[j]);
@@ -76,7 +106,7 @@ contract Bounty0xStaking is Ownable, Pausable {
     }
 
 
-    function releaseStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
+    function releaseStake(uint _submissionId, address _from, address _to, uint _amount) external onlyOwner {
         require(stakes[_submissionId][_from] >= _amount);
 
         stakes[_submissionId][_from] = SafeMath.sub(stakes[_submissionId][_from], _amount);
@@ -85,7 +115,7 @@ contract Bounty0xStaking is Ownable, Pausable {
         emit StakeReleased(_submissionId, _from, _to, _amount);
     }
 
-    function releaseManyStakes(uint[] _submissionIds, address[] _from, address[] _to, uint[] _amounts) public onlyOwner {
+    function releaseManyStakes(uint[] _submissionIds, address[] _from, address[] _to, uint[] _amounts) external onlyOwner {
         require(_submissionIds.length == _from.length &&
                 _submissionIds.length == _to.length &&
                 _submissionIds.length == _amounts.length);
@@ -99,18 +129,32 @@ contract Bounty0xStaking is Ownable, Pausable {
         }
     }
 
+    function changeLockTime(uint _periodInSeconds) external onlyOwner {
+        lockTime = _periodInSeconds;
+    }
+    
+    function changeLockAmount(uint _bntyAmount) external onlyOwner {
+        lockAmount = SafeMath.mul(_bntyAmount, (10 ** 18));
+    }
+
+
+    function isValidHunter(address _user) view public returns (bool) {
+        return huntersLockDateTime[_user] >= now;
+    }
+    
+    
     // Burnable mechanism
 
     address public bntyController;
 
-    event Burn(uint indexed submissionId, address from, uint amount);
+    event Burn(uint indexed submissionId, address indexed from, uint amount);
 
-    function changeBntyController(address _bntyController) onlyOwner public {
+    function changeBntyController(address _bntyController) external onlyOwner {
         bntyController = _bntyController;
     }
 
 
-    function burnStake(uint _submissionId, address _from) public onlyOwner {
+    function burnStake(uint _submissionId, address _from) external onlyOwner {
         require(stakes[_submissionId][_from] > 0);
 
         uint amountToBurn = stakes[_submissionId][_from];
