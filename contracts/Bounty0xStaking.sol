@@ -19,8 +19,6 @@ contract Bounty0xStaking is Ownable, Pausable {
 
     address public Bounty0xToken;
     uint public lockTime;
-    uint public lockAmount;
-
 
     mapping (address => uint) public balances;
     mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token
@@ -38,8 +36,7 @@ contract Bounty0xStaking is Ownable, Pausable {
 
     constructor(address _bounty0xToken) public {
         Bounty0xToken = _bounty0xToken;
-        lockTime = 2 weeks;
-        lockAmount = SafeMath.mul(1000, (10 ** 18));
+        lockTime = 30 days;
     }
     
 
@@ -59,26 +56,27 @@ contract Bounty0xStaking is Ownable, Pausable {
         emit Withdraw(msg.sender, _amount, balances[msg.sender]);
     }
     
-    function lock() external whenNotPaused {
-        require(!isValidHunter(msg.sender));
-        require(balances[msg.sender] >= lockAmount);
+    
+    function lock(uint _amount) external whenNotPaused {
+        require(_amount != 0);
+        require(balances[msg.sender] >= _amount);
         
-        balances[msg.sender] = SafeMath.sub(balances[msg.sender], lockAmount);
-        huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], lockAmount);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
+        huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], _amount);
         huntersLockDateTime[msg.sender] = SafeMath.add(now, lockTime);
         
-        emit Lock(msg.sender, lockAmount, huntersLockDateTime[msg.sender]);
+        emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockDateTime[msg.sender]);
     }
     
     function unlock() external whenNotPaused {
-        require(!isValidHunter(msg.sender));
+        require(huntersLockDateTime[msg.sender] <= now);
         uint amountLocked = huntersLockAmount[msg.sender];
         require(amountLocked != 0);
         
         huntersLockAmount[msg.sender] = SafeMath.sub(huntersLockAmount[msg.sender], amountLocked);
         balances[msg.sender] = SafeMath.add(balances[msg.sender], amountLocked);
         
-        emit Unlock(msg.sender, lockAmount);
+        emit Unlock(msg.sender, amountLocked);
     }
 
 
@@ -128,18 +126,10 @@ contract Bounty0xStaking is Ownable, Pausable {
             emit StakeReleased(_submissionIds[i], _from[i], _to[i], _amounts[i]);
         }
     }
+    
 
     function changeLockTime(uint _periodInSeconds) external onlyOwner {
         lockTime = _periodInSeconds;
-    }
-    
-    function changeLockAmount(uint _bntyAmount) external onlyOwner {
-        lockAmount = SafeMath.mul(_bntyAmount, (10 ** 18));
-    }
-
-
-    function isValidHunter(address _user) view public returns (bool) {
-        return huntersLockDateTime[_user] >= now;
     }
     
     
