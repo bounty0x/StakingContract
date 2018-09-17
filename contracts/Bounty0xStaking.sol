@@ -104,26 +104,28 @@ contract Bounty0xStaking is Ownable, Pausable {
     }
 
 
-    function releaseStake(uint _submissionId, address _from, address _to, uint _amount) external onlyOwner {
-        require(stakes[_submissionId][_from] >= _amount);
+    function releaseStake(uint _submissionId, address _from, address _to) external onlyOwner {
+        require(stakes[_submissionId][_from] != 0);
 
-        stakes[_submissionId][_from] = SafeMath.sub(stakes[_submissionId][_from], _amount);
-        balances[_to] = SafeMath.add(balances[_to], _amount);
-
-        emit StakeReleased(_submissionId, _from, _to, _amount);
+        balances[_to] = SafeMath.add(balances[_to], stakes[_submissionId][_from]);
+        emit StakeReleased(_submissionId, _from, _to, stakes[_submissionId][_from]);
+        
+        stakes[_submissionId][_from] = 0;
     }
 
-    function releaseManyStakes(uint[] _submissionIds, address[] _from, address[] _to, uint[] _amounts) external onlyOwner {
+    function releaseManyStakes(uint[] _submissionIds, address[] _from, address[] _to) external onlyOwner {
         require(_submissionIds.length == _from.length &&
-                _submissionIds.length == _to.length &&
-                _submissionIds.length == _amounts.length);
+                _submissionIds.length == _to.length);
 
         for (uint i = 0; i < _submissionIds.length; i++) {
-            require(stakes[_submissionIds[i]][_from[i]] >= _amounts[i]);
-            stakes[_submissionIds[i]][_from[i]] = SafeMath.sub(stakes[_submissionIds[i]][_from[i]], _amounts[i]);
-            balances[_to[i]] = SafeMath.add(balances[_to[i]], _amounts[i]);
-
-            emit StakeReleased(_submissionIds[i], _from[i], _to[i], _amounts[i]);
+            require(_from[i] != address(0));
+            require(_to[i] != address(0));
+            require(stakes[_submissionIds[i]][_from[i]] != 0);
+            
+            balances[_to[i]] = SafeMath.add(balances[_to[i]], stakes[_submissionIds[i]][_from[i]]);
+            emit StakeReleased(_submissionIds[i], _from[i], _to[i], stakes[_submissionIds[i]][_from[i]]);
+            
+            stakes[_submissionIds[i]][_from[i]] = 0;
         }
     }
     
