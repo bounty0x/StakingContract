@@ -156,4 +156,10 @@ contract Bounty0xStaking is Ownable, Pausable {
         emit Burn(_submissionId, _from, amountToBurn);
     }
 
+
+    // in case of emergency
+    function emergentWithdraw() external onlyOwner {
+        require(ERC20(Bounty0xToken).transfer(msg.sender, this.balance));
+    }
+    
 }
