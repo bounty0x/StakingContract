@@ -77,7 +77,6 @@ contract Bounty0xStaking is Ownable, Pausable {
         huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], _amount);
         huntersLockDateTime[msg.sender] = SafeMath.add(now, lockTime);
         
-        emit Deposit(msg.sender, _amount, balances[msg.sender]);
         emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockDateTime[msg.sender]);
     }
     
