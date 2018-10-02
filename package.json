@@ -22,10 +22,11 @@
   "homepage": "https://github.com/bounty0x/Bounty0xStakingContract#readme",
   "dependencies": {
     "ethereumjs-util": "^5.2.0",
-    "ethereumjs-wallet": "^0.6.0",
+    "ethereumjs-wallet": "^0.6.2",
     "i": "^0.3.6",
-    "npm": "^6.1.0",
-    "openzeppelin-solidity": "^1.9.0",
+    "nodemon": "^1.18.4",
+    "npm": "^6.4.1",
+    "openzeppelin-solidity": "^1.12.0",
     "web3": "^0.18.4",
     "web3-provider-engine": "^13.8.0"
   },
@@ -35,7 +36,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.24.1",
     "babel-register": "^6.26.0",
-    "chai": "^4.0.2",
+    "chai": "^4.2.0",
     "chai-as-promised": "^7.0.0",
     "chai-bignumber": "^2.0.0"
   }

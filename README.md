@@ -1,5 +1,7 @@
 # Bounty0xStakingContract
 
+[![Build Status](https://travis-ci.com/bounty0x/StakingContract.svg?branch=master)](https://travis-ci.com/bounty0x/StakingContract)
+
 Staking contract based on Zeppelin Contracts
 
 ## Requirements
