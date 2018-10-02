@@ -41,6 +41,7 @@ contract Bounty0xStaking is Ownable, Pausable {
     
 
     function deposit(uint _amount) external whenNotPaused {
+        require(_amount != 0);
         //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
         require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
         balances[msg.sender] = SafeMath.add(balances[msg.sender], _amount);
@@ -49,6 +50,7 @@ contract Bounty0xStaking is Ownable, Pausable {
     }
     
     function withdraw(uint _amount) external whenNotPaused {
+        require(_amount != 0);
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
@@ -65,6 +67,17 @@ contract Bounty0xStaking is Ownable, Pausable {
         huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], _amount);
         huntersLockDateTime[msg.sender] = SafeMath.add(now, lockTime);
         
+        emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockDateTime[msg.sender]);
+    }
+    
+    function depositAndLock(uint _amount) external whenNotPaused {
+        require(_amount != 0);
+        require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
+        
+        huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], _amount);
+        huntersLockDateTime[msg.sender] = SafeMath.add(now, lockTime);
+        
+        emit Deposit(msg.sender, _amount, balances[msg.sender]);
         emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockDateTime[msg.sender]);
     }
     
