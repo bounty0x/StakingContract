@@ -9,7 +9,7 @@ before_install:
   - docker pull ethereum/solc:0.4.24
 
 install:
-  - npm install -g truffle
+  - npm install -g truffle@4.1.14
   - npm install -g ganache-cli
   - npm install
 script:
