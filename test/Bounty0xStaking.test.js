@@ -1,4 +1,5 @@
 import expectThrow from './helpers/expectThrow';
+import increaseTime from './helpers/increaseTime';
 
 const SimpleToken = artifacts.require("SimpleToken");
 const Bounty0xStaking = artifacts.require("Bounty0xStaking");
@@ -73,6 +74,21 @@ contract('Bounty0xStaking', ([ owner, acct1, acct2, acct3, acct4, acct5 ]) => {
         await expectThrow(stakingContract.unlock({ from: owner }));
     });
 
+    it('should unlock (time increased)', async () => {
+        console.log("Hunter's lock time:", await stakingContract.huntersLockTime(owner));
+        console.log("Lock time:", await stakingContract.lockTime());
+        console.log("Current Time:", web3.eth.getBlock(web3.eth.blockNumber).timestamp);
+        console.log("Seconds until unlock:", await stakingContract.secondsUntilUnlock(owner));
+        var seconds = 2593000; // try: 100, 2593000, 2678400, 5356700, 5356800
+        web3.currentProvider.send({jsonrpc: "2.0", method: "evm_increaseTime", params: [seconds], id: 0});
+        web3.currentProvider.send({jsonrpc: "2.0", method: "evm_mine", params: [], id: 0});
+        console.log("Seconds passed:", seconds);
+        console.log("Current Time:", web3.eth.getBlock(web3.eth.blockNumber).timestamp);
+        console.log("secondsUntilUnlock:", await stakingContract.secondsUntilUnlock(owner));
+        
+        await stakingContract.unlock({ from: owner });
+    });
+
     it('should depositAndLock', async () => {
         await tokenContract.approve(stakingContract.address, 10);
         let stakingContractBalanceBefore = await tokenContract.balanceOf(stakingContract.address);
@@ -80,7 +96,7 @@ contract('Bounty0xStaking', ([ owner, acct1, acct2, acct3, acct4, acct5 ]) => {
         let stakingContractBalanceAfter = await tokenContract.balanceOf(stakingContract.address);
         
         let locked = await stakingContract.huntersLockAmount(owner);
-        assert.strictEqual(locked.toNumber(), 20);
+        assert.strictEqual(locked.toNumber(), 10);
 
         assert.strictEqual(stakingContractBalanceAfter.toNumber() - stakingContractBalanceBefore.toNumber(), 10);
     });

@@ -1,13 +1,13 @@
 import latestTime from './latestTime';
 
 // Increases testrpc time by the passed duration in seconds
-export default function increaseTime (duration) {
+export default function  (duration) {
   const id = Date.now();
 
   return new Promise((resolve, reject) => {
     web3.currentProvider.sendAsync({
       jsonrpc: '2.0',
-      method: 'evm_increaseTime',
+      method: 'evm_',
       params: [duration],
       id: id,
     }, err1 => {
@@ -31,11 +31,11 @@ export default function increaseTime (duration) {
  *
  * @param target time in seconds
  */
-export function increaseTimeTo (target) {
+export function To (target) {
   let now = latestTime();
   if (target < now) throw Error(`Cannot increase current time(${now}) to a moment in the past(${target})`);
   let diff = target - now;
-  return increaseTime(diff);
+  return (diff);
 }
 
 export const duration = {

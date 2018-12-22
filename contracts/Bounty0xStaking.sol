@@ -19,10 +19,11 @@ contract Bounty0xStaking is Ownable, Pausable {
 
     address public Bounty0xToken;
     uint public lockTime;
+    uint public unlockTime;
 
     mapping (address => uint) public balances;
     mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token
-    mapping (address => uint) public huntersLockDateTime;
+    mapping (address => uint) public huntersLockTime;
     mapping (address => uint) public huntersLockAmount;
     
     
@@ -37,6 +38,7 @@ contract Bounty0xStaking is Ownable, Pausable {
     constructor(address _bounty0xToken) public {
         Bounty0xToken = _bounty0xToken;
         lockTime = 30 days;
+        unlockTime = 1 days;
     }
     
 
@@ -65,9 +67,9 @@ contract Bounty0xStaking is Ownable, Pausable {
         
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], _amount);
-        huntersLockDateTime[msg.sender] = SafeMath.add(now, lockTime);
+        huntersLockTime[msg.sender] = now;
         
-        emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockDateTime[msg.sender]);
+        emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockTime[msg.sender]);
     }
     
     function depositAndLock(uint _amount) external whenNotPaused {
@@ -75,22 +77,40 @@ contract Bounty0xStaking is Ownable, Pausable {
         require(ERC20(Bounty0xToken).transferFrom(msg.sender, this, _amount));
         
         huntersLockAmount[msg.sender] = SafeMath.add(huntersLockAmount[msg.sender], _amount);
-        huntersLockDateTime[msg.sender] = SafeMath.add(now, lockTime);
+        huntersLockTime[msg.sender] = now;
         
-        emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockDateTime[msg.sender]);
+        emit Lock(msg.sender, huntersLockAmount[msg.sender], huntersLockTime[msg.sender]);
     }
     
     function unlock() external whenNotPaused {
-        require(huntersLockDateTime[msg.sender] <= now);
+        require(secondsUntilUnlock(msg.sender) == 0);
         uint amountLocked = huntersLockAmount[msg.sender];
-        require(amountLocked != 0);
         
         huntersLockAmount[msg.sender] = SafeMath.sub(huntersLockAmount[msg.sender], amountLocked);
+        huntersLockTime[msg.sender] = 0;
         balances[msg.sender] = SafeMath.add(balances[msg.sender], amountLocked);
         
         emit Unlock(msg.sender, amountLocked);
     }
-
+        
+    
+    function secondsUntilUnlock(address _hunter) public view whenNotPaused returns (uint) {
+        if (SafeMath.add(huntersLockTime[_hunter], lockTime) <= now) {
+            uint timeLocked = SafeMath.sub(now, huntersLockTime[_hunter]);
+            uint residual = SafeMath.add(timeLocked, unlockTime) % SafeMath.add(lockTime, unlockTime);
+            if (residual <= unlockTime) {
+                return 0;
+            } else {
+                uint timeLeft = SafeMath.sub(lockTime, SafeMath.sub(residual, unlockTime));
+                return timeLeft;
+            }
+        } else {
+            timeLocked = SafeMath.sub(now, huntersLockTime[_hunter]);
+            timeLeft = SafeMath.sub(lockTime, timeLocked);
+            return timeLeft;
+        }
+    }
+    
 
     function stake(uint _submissionId, uint _amount) external whenNotPaused {
         require(balances[msg.sender] >= _amount);
@@ -143,7 +163,13 @@ contract Bounty0xStaking is Ownable, Pausable {
     
 
     function changeLockTime(uint _periodInSeconds) external onlyOwner {
+        require(_periodInSeconds != 0);
         lockTime = _periodInSeconds;
+    }
+    
+    function changeTimeToUnlock(uint _periodInSeconds) external onlyOwner {
+        require(_periodInSeconds != 0);
+        unlockTime = _periodInSeconds;
     }
     
     
