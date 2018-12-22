@@ -1,6 +1,13 @@
 language: node_js
 node_js:
   - "8"
+services:
+  - docker
+
+before_install:
+  - docker pull ethereum/client-go:latest
+  - docker pull ethereum/solc:0.4.24
+
 install:
   - npm install -g truffle
   - npm install -g ganache-cli
