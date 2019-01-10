@@ -167,7 +167,7 @@ contract Bounty0xStaking is Ownable, Pausable {
         lockTime = _periodInSeconds;
     }
     
-    function changeTimeToUnlock(uint _periodInSeconds) external onlyOwner {
+    function changeUnlockTime(uint _periodInSeconds) external onlyOwner {
         require(_periodInSeconds != 0);
         unlockTime = _periodInSeconds;
     }
