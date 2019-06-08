@@ -92,6 +92,18 @@ contract Bounty0xStaking is Ownable, Pausable {
         
         emit Unlock(msg.sender, amountLocked);
     }
+    
+    function unlockAndWithdraw() external whenNotPaused {
+        require(secondsUntilUnlock(msg.sender) == 0);
+        uint amountLocked = huntersLockAmount[msg.sender];
+        
+        huntersLockAmount[msg.sender] = SafeMath.sub(huntersLockAmount[msg.sender], amountLocked);
+        huntersLockTime[msg.sender] = 0;
+        require(ERC20(Bounty0xToken).transfer(msg.sender, amountLocked));
+        
+        emit Unlock(msg.sender, amountLocked);
+        emit Withdraw(msg.sender, amountLocked, balances[msg.sender]);
+    }
         
     
     function secondsUntilUnlock(address _hunter) public view whenNotPaused returns (uint) {
