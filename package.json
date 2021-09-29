@@ -24,7 +24,7 @@
     "ethereumjs-util": "^5.2.0",
     "ethereumjs-vm": "^2.5.0",
     "ethereumjs-wallet": "^0.6.3",
-    "i": "^0.3.6",
+    "i": "^0.3.7",
     "nodemon": "^1.18.9",
     "npm": "^6.5.0",
     "openzeppelin-solidity": "^1.12.0",
